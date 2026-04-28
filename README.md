@@ -1,5 +1,10 @@
 # Flask Task Manager API
 
+![Python](https://img.shields.io/badge/python-3.11-blue)
+![Flask](https://img.shields.io/badge/flask-backend-green)
+![JWT](https://img.shields.io/badge/authentication-JWT-orange)
+![Swagger](https://img.shields.io/badge/docs-swagger-lightblue)
+
 API RESTful desenvolvida com Flask para gerenciamento de tarefas com autenticação JWT, controle multiusuário e documentação Swagger.
 
 ---
