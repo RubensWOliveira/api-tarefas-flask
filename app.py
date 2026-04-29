@@ -6,30 +6,10 @@ from routes.auth_routes import auth_bp
 from flask_bcrypt import Bcrypt
 from flasgger import Swagger
 
-swagger_template = {
-    "swagger": "2.0",
-    "info": {
-        "title": "Flask Task Manager API",
-        "description": "API REST com autenticação JWT",
-        "version": "1.0.0"
-    }
-}
 
-swagger_config = {
-    "headers": [],
-    "specs": [
-        {
-            "endpoint": "apispec",
-            "route": "/apispec.json",
-            "rule_filter": lambda rule: True,
-            "model_filter": lambda tag: True,
-        }
-    ],
-    "swagger_ui": True,
-    "specs_route": "/apidocs/"
-}
+app = Flask(__name__)
 
-Swagger(app, template=swagger_template, config=swagger_config)
+swagger = Swagger(app)
 
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///database.db"
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
@@ -48,14 +28,21 @@ def home():
     return "API de tarefas funcionando com Swagger!"
 
 
+@app.route("/docs-test")
+def docs_test():
+    """
+    Test endpoint
+    ---
+    responses:
+      200:
+        description: Endpoint de teste Swagger
+    """
+    return "Swagger ativo"
+
+
 with app.app_context():
     db.create_all()
 
-@app.route("/debug/routes")
-def debug_routes():
-    return {
-        "routes": [str(rule) for rule in app.url_map.iter_rules()]
-    }
 
 if __name__ == "__main__":
     app.run(debug=True)
