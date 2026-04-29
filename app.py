@@ -10,7 +10,7 @@ from flasgger import Swagger
 
 app = Flask(__name__)
 
-Swagger(app, config={
+swagger_config = {
     "headers": [],
     "specs": [
         {
@@ -20,10 +20,11 @@ Swagger(app, config={
             "model_filter": lambda tag: True,
         }
     ],
-    "static_url_path": "/flasgger_static",
     "swagger_ui": True,
     "specs_route": "/apidocs/"
-})
+}
+
+swagger = Swagger(app, config=swagger_config)
 
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///database.db"
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
