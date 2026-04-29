@@ -6,9 +6,14 @@ from routes.auth_routes import auth_bp
 from flask_bcrypt import Bcrypt
 from flasgger import Swagger
 
-
-
-app = Flask(__name__)
+swagger_template = {
+    "swagger": "2.0",
+    "info": {
+        "title": "Flask Task Manager API",
+        "description": "API REST com autenticação JWT",
+        "version": "1.0.0"
+    }
+}
 
 swagger_config = {
     "headers": [],
@@ -24,7 +29,7 @@ swagger_config = {
     "specs_route": "/apidocs/"
 }
 
-swagger = Swagger(app, config=swagger_config)
+Swagger(app, template=swagger_template, config=swagger_config)
 
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///database.db"
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
@@ -46,6 +51,11 @@ def home():
 with app.app_context():
     db.create_all()
 
+@app.route("/debug/routes")
+def debug_routes():
+    return {
+        "routes": [str(rule) for rule in app.url_map.iter_rules()]
+    }
 
 if __name__ == "__main__":
     app.run(debug=True)
