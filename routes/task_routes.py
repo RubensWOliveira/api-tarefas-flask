@@ -1,17 +1,45 @@
 from flask import Blueprint, request, jsonify
 from database import db
 from models.task import Task
+from flask_jwt_extended import jwt_required, get_jwt_identity
+
 
 task_bp = Blueprint("task_bp", __name__)
 
 
 @task_bp.route("/tasks", methods=["POST"])
+@jwt_required()
 def create_task():
+    """
+    Criar nova tarefa
+    ---
+    tags:
+      - Tarefas
+    security:
+      - Bearer: []
+    parameters:
+      - name: body
+        in: body
+        required: true
+        schema:
+          properties:
+            title:
+              type: string
+            description:
+              type: string
+    responses:
+      201:
+        description: Tarefa criada com sucesso
+      401:
+        description: Token inválido ou ausente
+    """
     data = request.get_json()
+    user_id = get_jwt_identity()
 
     new_task = Task(
         title=data["title"],
-        description=data.get("description", "")
+        description=data.get("description", ""),
+        user_id=user_id
     )
 
     db.session.add(new_task)
@@ -24,8 +52,24 @@ def create_task():
 
 
 @task_bp.route("/tasks", methods=["GET"])
+@jwt_required()
 def get_tasks():
-    tasks = Task.query.all()
+    """
+    Listar tarefas do usuário logado
+    ---
+    tags:
+      - Tarefas
+    security:
+      - Bearer: []
+    responses:
+      200:
+        description: Lista de tarefas retornada com sucesso
+      401:
+        description: Token inválido ou ausente
+    """
+    user_id = get_jwt_identity()
+
+    tasks = Task.query.filter_by(user_id=user_id).all()
 
     task_list = []
 
@@ -41,11 +85,18 @@ def get_tasks():
 
 
 @task_bp.route("/tasks/<int:id>", methods=["GET"])
+@jwt_required()
 def get_task(id):
+
+    user_id = get_jwt_identity()
+
     task = Task.query.get(id)
 
     if not task:
         return jsonify({"message": "Tarefa não encontrada"}), 404
+
+    if task.user_id != int(user_id):
+        return jsonify({"message": "Acesso negado"}), 403
 
     return jsonify({
         "id": task.id,
@@ -54,10 +105,12 @@ def get_task(id):
         "completed": task.completed
     })
 
-
 @task_bp.route("/tasks/<int:id>", methods=["PUT"])
+@jwt_required()
 def update_task(id):
-    task = Task.query.get(id)
+    user_id = get_jwt_identity()
+
+    task = Task.query.filter_by(id=id, user_id=user_id).first()
 
     if not task:
         return jsonify({"message": "Tarefa não encontrada"}), 404
@@ -74,8 +127,11 @@ def update_task(id):
 
 
 @task_bp.route("/tasks/<int:id>", methods=["DELETE"])
+@jwt_required()
 def delete_task(id):
-    task = Task.query.get(id)
+    user_id = get_jwt_identity()
+
+    task = Task.query.filter_by(id=id, user_id=user_id).first()
 
     if not task:
         return jsonify({"message": "Tarefa não encontrada"}), 404
@@ -84,3 +140,38 @@ def delete_task(id):
     db.session.commit()
 
     return jsonify({"message": "Tarefa deletada com sucesso"})
+
+@task_bp.route("/tasks/<int:id>/complete", methods=["PATCH"])
+@jwt_required()
+def complete_task(id):
+    """
+    Marcar tarefa como concluída
+    ---
+    tags:
+      - Tarefas
+    security:
+      - Bearer: []
+    parameters:
+      - name: id
+        in: path
+        type: integer
+        required: true
+    responses:
+      200:
+        description: Tarefa marcada como concluída
+      404:
+        description: Tarefa não encontrada
+    """
+
+    user_id = get_jwt_identity()
+
+    task = Task.query.filter_by(id=id, user_id=user_id).first()
+
+    if not task:
+        return jsonify({"message": "Tarefa não encontrada"}), 404
+
+    task.completed = True
+
+    db.session.commit()
+
+    return jsonify({"message": "Tarefa marcada como concluída"})
