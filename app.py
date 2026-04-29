@@ -40,7 +40,7 @@ app.register_blueprint(auth_bp)
 
 @app.route("/")
 def home():
-    return "API de tarefas funcionando!"
+    return "API de tarefas funcionando com Swagger!"
 
 
 with app.app_context():
